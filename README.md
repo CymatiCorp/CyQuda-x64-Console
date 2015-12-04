@@ -74,7 +74,6 @@ Target Machine Platform: 64-bit (--machine 64)
   - Name: CyQuda64
   - Add.<br><br>
 
-Copy code from CyQuda64.cu <br>
-or import from zip file.<br><br>
+Copy code from CyQuda64.cu into file, (or import CyCuda64 from zip file.) <br><br>
 
 * Compile and or Rebuild Solution.
