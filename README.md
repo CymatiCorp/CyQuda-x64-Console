@@ -48,18 +48,26 @@ Compile Directions.<br><br>
 "Please notice that the libraries have changed to compile for a 64-bit setup."
 ```
 * Right click solution name (CyQuda64) 
-  - Click Properties<br>
-Configuration Properties >VC++ Directories<br>
-Include Directories<br>
+  - Properties<br>
+  - Configuration Properties > General
+  - Set "Character Set" to  ``` Use Multi-Byte Character Set ```
+  
+*  Configuration Properties > VC++ Directories > Include Directories<br>
 ```
 $(VCInstallDir)include;$(VCInstallDir)atlmfc\include;$(WindowsSDK_IncludePath);C:\ProgramData\NVIDIA Corporation\CUDA Samples\v7.5\common\inc\; 
 ```
-Library Directories<br>
+
+Configuration Properties > VC++ Directories >Library Directories<br>
 ```
 $(VCInstallDir)lib\amd64;$(VCInstallDir)atlmfc\lib\amd64;$(WindowsSDK_LibraryPath_x64);C:\ProgramData\NVIDIA Corporation\CUDA Samples\v7.5\common\lib\; 
 ```
 <br><br>
-CUDA C/C++ > Common <br>
+Configuration Properties > Linker > General<br>
+```
+%(AdditionalLibraryDirectories);$(CudaToolkitLibDir);$(CUDA_LIB_PATH);C:\ProgramData\NVIDIA Corporation\CUDA Samples\v7.5\common\lib\; 
+```
+<br><br>
+Configuration Properties > CUDA C/C++ > Common <br>
 ```
 Target Machine Platform: 64-bit (--machine 64)
 ```
