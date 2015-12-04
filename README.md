@@ -53,3 +53,4 @@ CUDA C/C++ > Common <br>
 ```
 Target Machine Platform: 64-bit (--machine 64)
 ```
+* Compile / Rebuild Solution.
