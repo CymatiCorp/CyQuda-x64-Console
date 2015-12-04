@@ -29,11 +29,6 @@ Compile Directions.<br><br>
 * Right click project name in solution explorer (CyQuda64)
   - Build Customizations
   - Check CUDA 7.5 (.targets, .props) <br><br>
-* Right click "Source Files"
-  - Add new item ...
-  - Nvidia CUDA 7.5 > Code > CUDA C/C++ File
-  - Name: CyQuda64
-  - Add.<br><br>
 * Project > Properties > Configuration Properties
   - Click button "Configuration Manager"
   - Click drop-down "active solution platform" and click "< New >"
@@ -72,4 +67,14 @@ Configuration Properties > CUDA C/C++ > Common <br>
 Target Machine Platform: 64-bit (--machine 64)
 ```
 <br><br>
+
+* Right click "Source Files"
+  - Add new item ...
+  - Nvidia CUDA 7.5 > Code > CUDA C/C++ File
+  - Name: CyQuda64
+  - Add.<br><br>
+
+Copy code from CyQuda64.cu <br>
+or import from zip file.<br><br>
+
 * Compile and or Rebuild Solution.
