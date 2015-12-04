@@ -40,7 +40,7 @@ Compile Directions.<br><br>
   - press OK
   
 ```
-"Please notice that the libraries have changed to compile for a 64-bit setup."
+"Please notice that the library/include folders are different than what you would use for 32-bit."
 ```
 * Right click solution name (CyQuda64) 
   - Properties<br>
