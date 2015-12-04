@@ -14,3 +14,38 @@ Commands:
 * Exit <br>
    - Exits program.
 
+<br><br><br><br>
+Compile Directions.<br><br>
+===================
+
+* Create New Project ...<br>
+  - Installed > Templates > Visual C++ > Win32 > Win32 Console Application
+  - Name: CyQuda64<BR><BR>
+* Win32 Application Wizard
+  - Console Application
+  - Empty Project
+  - Finish.<BR><BR>
+* Right click project name in solution explorer (CyQuda64)
+  - Build Customizations
+  - Check CUDA 7.5 (.targets, .props) <br><br>
+* Right click "Source Files"
+  - Add new item ...
+  - Nvidia CUDA 7.5 > Code > CUDA C/C++ File
+  - Name: CyQuda64
+  - Add.
+
+
+Configuration Properties >VC++ Directories<br>
+Include Directories<br>
+```
+$(VCInstallDir)include;$(VCInstallDir)atlmfc\include;$(WindowsSDK_IncludePath);C:\ProgramData\NVIDIA Corporation\CUDA Samples\v7.5\common\inc\; 
+```
+Library Directories<br>
+```
+$(VCInstallDir)lib\amd64;$(VCInstallDir)atlmfc\lib\amd64;$(WindowsSDK_LibraryPath_x64);C:\ProgramData\NVIDIA Corporation\CUDA Samples\v7.5\common\lib\; 
+```
+<br><br>
+CUDA C/C++ > Common <br>
+```
+Target Machine Platform: 64-bit (--machine 64)
+```
