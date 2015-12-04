@@ -39,9 +39,7 @@ Compile Directions.<br><br>
   - Examine Configuration Properties > Configuration and make sure Platform is set to "x64"
   - press OK
   
-```
-"Please notice that the library/include folders are different than what you would use for 32-bit."
-```
+
 * Right click solution name (CyQuda64) 
   - Properties<br>
   - Configuration Properties > General
