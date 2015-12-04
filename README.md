@@ -1,7 +1,8 @@
 # CyQuda x64 (Console)
 CUDA Query Tool for 64-bit Console application.
 
-Commands: 
+Commands.
+=========
 * Add 1.2.3<br>
   - Adds elements to the next index.<br><br>
 * Delete 1 (Not implimented)<br>
@@ -34,6 +35,9 @@ Compile Directions.<br><br>
   - Name: CyQuda64
   - Add.
 
+```
+"Please notice that the libraries have changed to compile for a 64-bit setup."
+```
 
 Configuration Properties >VC++ Directories<br>
 Include Directories<br>
