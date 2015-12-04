@@ -60,10 +60,19 @@ Configuration Properties > Linker > General<br>
 %(AdditionalLibraryDirectories);$(CudaToolkitLibDir);$(CUDA_LIB_PATH);C:\ProgramData\NVIDIA Corporation\CUDA Samples\v7.5\common\lib\; 
 ```
 <br><br>
+Configuration Properties > Linker > Input<br>
+```
+cudart.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies) 
+```
+<br><br>
 Configuration Properties > CUDA C/C++ > Common <br>
 ```
 Target Machine Platform: 64-bit (--machine 64)
 ```
+<br><br>
+
+``` Notice that the 64-bit setup uses different include/library folders than you would use for 32-bit. ```
+
 <br><br>
 
 * Right click "Source Files"
