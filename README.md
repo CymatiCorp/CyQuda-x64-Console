@@ -57,7 +57,7 @@ Compile Directions.<br><br>
 $(VCInstallDir)include;$(VCInstallDir)atlmfc\include;$(WindowsSDK_IncludePath);C:\ProgramData\NVIDIA Corporation\CUDA Samples\v7.5\common\inc\; 
 ```
 
-Configuration Properties > VC++ Directories >Library Directories<br>
+Configuration Properties > VC++ Directories > Library Directories<br>
 ```
 $(VCInstallDir)lib\amd64;$(VCInstallDir)atlmfc\lib\amd64;$(WindowsSDK_LibraryPath_x64);C:\ProgramData\NVIDIA Corporation\CUDA Samples\v7.5\common\lib\; 
 ```
@@ -71,4 +71,5 @@ Configuration Properties > CUDA C/C++ > Common <br>
 ```
 Target Machine Platform: 64-bit (--machine 64)
 ```
-* Compile / Rebuild Solution.
+<br><br>
+* Compile and or Rebuild Solution.
