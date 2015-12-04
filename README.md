@@ -33,12 +33,22 @@ Compile Directions.<br><br>
   - Add new item ...
   - Nvidia CUDA 7.5 > Code > CUDA C/C++ File
   - Name: CyQuda64
-  - Add.
-
+  - Add.<br><br>
+* Project > Properties > Configuration Properties
+  - Click button "Configuration Manager"
+  - Click drop-down "active solution platform" and click "< New >"
+  - Set platform type to: x64, copy settings from Win32.
+  - press OK
+  - Click drop-down "active solution platform" again, and click "< Edit >"
+  - Select Win32 and "Remove"
+  - Examine Configuration Properties > Configuration and make sure Platform is set to "x64"
+  - press OK
+  
 ```
 "Please notice that the libraries have changed to compile for a 64-bit setup."
 ```
-
+* Right click solution name (CyQuda64) 
+  - Click Properties<br>
 Configuration Properties >VC++ Directories<br>
 Include Directories<br>
 ```
