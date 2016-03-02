@@ -1,5 +1,4 @@
 #define WIN32_LEAN_AND_MEAN
-#include <windows.h>
 #include <stdio.h>
 #include <assert.h>
 #include <string>
@@ -12,240 +11,237 @@
 #include <iostream>
 #include <vector>
 
-//#include <thrust/host_vector.h>
-//#include <thrust/device_vector.h>
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#include <windows.h>
 
-/*
- TO DO
-  1. Search Entries using CUDA.
-   2. Load entries from file
-    3. Use a socket layer to accept commands.
+#pragma comment (lib, "Ws2_32.lib")
+#include "CyQu_bridge.h"
 
-  For "search entries", to copy the Array from Host to Device 
-  we will need to flatten the array 
-    from [Row][Column] 
-	  to [Row + Column*N]
- 
-  Decide between Array, Vector, or Thrust
-  where each has its drawbacks and limitations.
-
- */
+#define DEFAULT_BUFLEN 512
+#define DEFAULT_PORT "12008"
 
 using namespace std;
 
-//Initialize Variables.
-int matrixIndex = 0;    // Initial matrix Index.
-int searchIndex = 0;    // Initial search Index.
+void CySend(SOCKET ClientSocket, string cyData) {
+	cyData = cyData + "\n";
+	char *sendData;
+	sendData = new char[cyData.size() + 1];
+    memcpy(sendData, cyData.c_str(), cyData.size() + 1);
 
-int matrixSize = 8000;  // Max argvbase Entries.
-int searchSize = 10;    // Max Search Entries.
-int resultSize = 20;    // Max Result Entries.
-
-int selectIndex = 0;
-int i = 0;
-
-// Create Arrays.
-vector<vector<int>> myMatrix;
-vector<vector<int>> mySearch;
-vector<vector<int>> myResults;
-
-
-cudaError_t searchMatrix(int *searchResult, char *aMatrix, char *searchElement);
-cudaError_t addMatrix(char *matrixArray);
-
-// CUDA engine for searchMatrix function.
-__global__ void searchMatrixKernel(int searchResult, char aMatrix , char searchElement)
-{
-// int x = threadIdx.x;
-
-/* 
- int sI = 0;
- // Detect the first matching character
- if (myMatrix[matrixIndex][sI] == searchElement[0]) {
-   // Loop through next keyword character
-   for (int j=1; j< matrixIndex.size(); j++) {
-     if (myMatrix[matrixIndex][sI] != searchElement[j])
-       break;
-     else
-     // Store the first matching character to the result list
-       searchResult[sI] = 1;
-   }
-  }
-*/
-
+    int iSendResult; 
+	iSendResult = send(ClientSocket,  sendData, cyData.size(), 0);
+			
+	        // iSendResult = send( ClientSocket, recvbuf, iResult, 0 );
+            if (iSendResult == SOCKET_ERROR) {
+                cout << "Send Failure: " << WSAGetLastError();
+                closesocket(ClientSocket);
+                WSACleanup();
+                return;
+            }
+ return;			
 }
 
-/*
-// Search helper Function.
-cudaError_t searchMatrix(int * result, char *matrixargv, char *searchElements) 
+int __cdecl init_Server(void) 
 {
 	
- char *dev_argv = 0;
- char *dev_keyword = 0;
- int *dev_result = 0;
- 
- cudaError_t cudaStatus;
- cudaStatus = cudaSetDevice(0);  // Choose which GPU to run on, change this on a multi-GPU system.
+	int CQ_success;
+    int iResult;
 
- if (cudaStatus != cudaSuccess) { fprintf(stderr, "cudaSetDevice failed! Do you have a CUDA-capable GPU installed? 0"); goto Error; }
- cudaStatus = cudaMalloc((void**)&dev_result, resultSize * sizeof(int));                                          // Allocate GPU buffers for result set.
- if (cudaStatus != cudaSuccess) {  fprintf(stderr, "cudaMalloc failed! 1 "); goto Error;  }
- cudaStatus = cudaMalloc((void**)&dev_argv, matrixSize * sizeof(char));                                           // Allocate GPU buffers for input argv set.
- if (cudaStatus != cudaSuccess) {  fprintf(stderr, "cudaMalloc failed! 2 ");  goto Error; }
- cudaStatus = cudaMalloc((void**)&dev_keyword, sizeof(*searchElements));                                        // Allocate GPU buffers for keyword.
- if (cudaStatus != cudaSuccess) { fprintf(stderr, "cudaMalloc failed! 3 "); goto Error; }
- cudaStatus = cudaMemcpy(dev_argv, matrixargv, matrixSize * sizeof(char), cudaMemcpyHostToDevice);                      // Copy input argv from host memory to GPU buffers.
- if (cudaStatus != cudaSuccess) { fprintf(stderr, "cudaMemcpy failed! 4 "); goto Error; }
- cudaStatus = cudaMemcpy(dev_keyword, searchElements, sizeof(*searchElements), cudaMemcpyHostToDevice);                // Copy keyword from host memory to GPU buffers.
- if (cudaStatus != cudaSuccess) { fprintf(stderr, "cudaMemcpy failed! 5 "); goto Error; }
+	WSADATA wsaData;
+	SOCKET ListenSocket = INVALID_SOCKET;
+    SOCKET ClientSocket = INVALID_SOCKET;
 
- searchMatrixKernel<<<1, matrixSize>>>(dev_result, dev_argv, dev_keyword);                                      // Launch a search keyword kernel on the GPU with one thread for each element.
- cudaStatus = cudaDeviceSynchronize();                                                                         // cudaDeviceSynchronize waits for the kernel to finish, and returns any errors encountered during the launch.
- if (cudaStatus != cudaSuccess) { fprintf(stderr, "cudaDeviceSynchronize returned error code %d after launching addKernel! 6 \n", cudaStatus); goto Error; }
- cudaStatus = cudaMemcpy(result, dev_result, resultSize * sizeof(int), cudaMemcpyDeviceToHost);                  // Copy result from GPU buffer to host memory.
- if (cudaStatus != cudaSuccess) { fprintf(stderr, "cudaMemcpy failed! 7"); goto Error; }
+	struct addrinfo *result = NULL;
+    struct addrinfo hints;
 
-Error:
- cudaFree(dev_result);
- cudaFree(dev_argv);
- cudaFree(dev_keyword);
+    std::vector<char> myRecv;
+    
+	char recvbuf[DEFAULT_BUFLEN];
+    int recvbuflen = DEFAULT_BUFLEN;
+    
+    // Initialize Winsock
+    iResult = WSAStartup(MAKEWORD(2,2), &wsaData);
+    if (iResult != 0) {
+        printf("WSAStartup failed with error: %d\n", iResult);
+        return 1;
+    }
 
- return cudaStatus;
+    ZeroMemory(&hints, sizeof(hints));
+    hints.ai_family = AF_INET;
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_protocol = IPPROTO_TCP;
+    hints.ai_flags = AI_PASSIVE;
+
+    // Resolve the server address and port
+    iResult = getaddrinfo(NULL, DEFAULT_PORT, &hints, &result);
+    if ( iResult != 0 ) {
+        printf("getaddrinfo failed with error: %d\n", iResult);
+        WSACleanup();
+        return 1;
+    }
+
+    // Create a SOCKET for connecting to server
+    ListenSocket = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
+    if (ListenSocket == INVALID_SOCKET) {
+        printf("socket failed with error: %ld\n", WSAGetLastError());
+        freeaddrinfo(result);
+        WSACleanup();
+        return 1;
+    }
+
+    // Setup the TCP listening socket
+    iResult = bind( ListenSocket, result->ai_addr, (int)result->ai_addrlen);
+    if (iResult == SOCKET_ERROR) {
+        printf("bind failed with error: %d\n", WSAGetLastError());
+        freeaddrinfo(result);
+        closesocket(ListenSocket);
+        WSACleanup();
+        return 1;
+    }
+
+    freeaddrinfo(result);
+
+    iResult = listen(ListenSocket, SOMAXCONN);
+    if (iResult == SOCKET_ERROR) {
+        printf("listen failed with error: %d\n", WSAGetLastError());
+        closesocket(ListenSocket);
+        WSACleanup();
+        return 1;
+    }
+
+    // Accept a client socket
+    ClientSocket = accept(ListenSocket, NULL, NULL);
+    if (ClientSocket == INVALID_SOCKET) {
+        printf("accept failed with error: %d\n", WSAGetLastError());
+        closesocket(ListenSocket);
+        WSACleanup();
+        return 1;
+    }
+
+    // No longer need server socket
+    closesocket(ListenSocket);
+
+    // Receive until the peer shuts down the connection
+    do {
+
+        iResult = recv(ClientSocket, recvbuf, recvbuflen, 0);
+        if (iResult > 0) {
+			
+			std::vector<char> vec(recvbuf, recvbuf + iResult);
+			std::string myRecv(vec.begin(), vec.end());
+
+			// END                       - Terminates connection and program. 
+			if (myRecv == "END\r\n") { 
+	
+			CyQu_EXIT(ClientSocket);
+
+			}
+
+			std::cout << myRecv;
+		    char split_char = ' ';
+            std::istringstream split(myRecv);
+            std::vector<std::string> myCmd2;
+
+            for (std::string each; std::getline(split, each, split_char); myCmd2.push_back(each));
+
+		
+
+			if (myCmd2.size() < 2) {
+				
+			 myRecv = "";
+			 myCmd2.resize(0);
+			 continue;
+			} 
+
+			// ADD     [TABLE] [DATA]    - Adds [DATA] to [TABLE] where [DATA] is in 1.1.1 format 
+			if (myCmd2[0] == "ADD") { 
+	
+			CQ_success = CyQu_ADD(ClientSocket, myCmd2[1]);
+
+			}
+
+			// GET     [TABLE] [INDEX]   - Retrieves "1.2.3" string of data by [INDEX] starting with integer 1 in the order added.
+	     	if (myCmd2[0] == "GET") { 
+	
+				CQ_success = CyQu_GET(ClientSocket, myCmd2[1]);
+
+				if (CQ_success == 0) {
+				 cout << "\n Out of Range \n"; 
+				 CySend(ClientSocket, "CY: OUT OF RANGE");
+				}
+
+			}
+			
+			// UPDATE  [TABLE]           - Refreshes [TABLE] arrays in GPU memory, that was inserted by ADD.
+			if (myCmd2[0] == "UPDATE") {
+			 
+			}
+
+			if (myCmd2[0] == "FIND") {
+		     CQ_success = CyQu_FIND(ClientSocket, myCmd2[1]);
+			}
+			
+			if (myCmd2[0] == "CLEAR") {
+			 CySend(ClientSocket, "Database Cleared");
+		     CQ_success = CyQu_CLEAR(ClientSocket);
+			}
+
+			// Programmers Notes:
+			// Using   [TABLE] will probably require use of a 2d array and &pointer setup to reference it.
+			//          where [TABLE] is likely defined as an integer index. For now, we will stick to a
+			//          flat array for proof of concept.
+
+			// MAKE    [TABLE] 
+			// ADD     [TABLE] [DATA]         - Adds [DATA] to [TABLE] where [DATA] is in 1.1.1 format 
+            // GET     [TABLE] [INDEX]        - Retrieves "1.2.3" string of data by [INDEX] starting with integer 1 in the order added.
+			// UPDATE  [TABLE]                - Refreshes [TABLE] arrays in GPU memory, that was inserted by ADD.
+			// FIND    [TABLE] [DATA]         - Searches for [DATA] 1.1.1 which is converted to CPU array, and sent to GPU memory.
+			// STOP    [TABLE] [SEARCH_INDEX] - Stops searching for [DATA] in the provided [SEARCH_INDEX] 
+			// FREE    [TABLE]                - Frees up [TABLE] array from local memory and GPU memory.
+			// ACTIVE                         - Outputs all active search indexes in form of 
+			//                                   :ACTIVE_TOTAL [TOTAL_ACTIVE_SEARCHES] 
+			//                                   :ACTIVE       [SEARCH_INDEX] [SEARCH_ARRAY_STRING] [TOTAL_FOUND_RESULTS]
+			// 
+			// SAVE    [TABLE] [FILE]    - Saves [TABLE] and outputs [TABLE] and [FILE] saved to.
+			// LOAD    [TABLE] [FILE]    - Loads [TABLE] and outputs [TABLE] and [FILE] loaded from.
+			// END                       - Terminates connection and program. 
+
+
+        }
+        else if (iResult == 0)
+            printf("Connection closing...\n");
+        else  {
+            printf("recv failed with error: %d\n", WSAGetLastError());
+            closesocket(ClientSocket);
+            WSACleanup();
+            return 1;
+        }
+
+    } while (iResult > 0);
+
+    // shutdown the connection since we're done
+    iResult = shutdown(ClientSocket, SD_SEND);
+    if (iResult == SOCKET_ERROR) {
+        printf("shutdown failed with error: %d\n", WSAGetLastError());
+        closesocket(ClientSocket);
+        WSACleanup();
+        return 1;
+    }
+
+    // cleanup
+    closesocket(ClientSocket);
+    WSACleanup();
+
+    return 0;
 }
-*/
+
 
 // Main Function.
 int main(int argc, const char *argv[]) {
 	
-	std::string newArg;
-    char *myOutput;
-	myOutput = "";
-	cout << "CyQuda-x64 1.0 (Console) \n\n";
+	init_Server();
 
-getInput:
-	newArg = "";
-	cout << "> ";
-
-	std::getline(std::cin, newArg);
-	// Get Arguments.  std::vector<std::string> myArgs(argv, argv + argc);
-	char split_char = ' ';
-    std::istringstream split(newArg);
-    std::vector<std::string> myCmd;
-    for (std::string each; std::getline(split, each, split_char); myCmd.push_back(each));
-    
-	if (myCmd.size() == 0) { 
-		cout << "usage:  CyQuda.exe Add/Request/Search/Exit \n\n";
-		goto getInput;
-	} 
-
-	std::string my_Command = myCmd[0];
-
-	if (my_Command == "Exit") { 
-	    cout << "\n\n Exiting . . .\n\n";
-		return 0;
-	}
+	return 0;
 	
-	if (myCmd.size() == 1) {
-		if (my_Command == "Add") { cout << "\n\n Usage: Add 1.2.3 \n\n"; }
-		if (my_Command == "Request") { cout << "\n\n Usage: Request 1 \n\n"; }
-		if (my_Command == "Delete") { cout << "\n\n Usage: Delete 1 \n\n"; }
-		if (my_Command == "Search") { cout << "\n\n Usage: Search 1.2.3 \n\n"; }
-      goto getInput;
-	}
-	
-    char split_char2 = '.';
-    std::istringstream split2(myCmd[1]);
-    std::vector<std::string> token;
-    for (std::string each2; std::getline(split2, each2, split_char2); token.push_back(each2));
-	
-	// ================================== Add <Index Index ...>
-	if (my_Command == "Add") {
-	
-
-     matrixIndex++;
-	 if ((matrixIndex +1) > myMatrix.size()) { 
-		 myMatrix.resize(myMatrix.size() + 1000);
-	 }
-	 myMatrix[matrixIndex].resize(token.size() + 1);
-     // myMatrix.push_back(myRow);
-     // myMatrix[matrixIndex].push_back(1);
-
-	 cout << " - ";
-	 for (i = 0; i < token.size(); i++) {
-      myMatrix[matrixIndex][i] = atoi(token[i].c_str());
-	 cout << token[i].c_str() << " ";
-	 }
-	 cout << "\n";
-	 // sprintf(myOutput, "Index %d", matrixIndex);
-	 
-     goto getInput;
-	}
-
-	// ================================== Delete
-	if (my_Command == "Delete") {
-	 goto getInput;
-	}
-
-	// ================================== Request <Index>
-	if (my_Command == "Request") {
-        selectIndex = atoi(token[0].c_str());
-		
-		if (selectIndex > matrixIndex) {
-			cout << "\n Out of Range \n"; 
-			goto getInput;
-		}
-		if (selectIndex < 1) { 
-			cout << "\n Out of Range \n"; 
-			goto getInput;
-		}
-		cout << "\n Length: " << (myMatrix[selectIndex].size() -1) << "\n ";
-	    cout << "\n ";
-		for (i = 0; i < (myMatrix[selectIndex].size() -1); i++) {
-   	     cout << myMatrix[selectIndex][i] << " "; 
-		}
-
-		cout << " \n";
-	
-		goto getInput;
-	}
-	
-	// ================================== List	
-	// = List active searches.
-	if (my_Command == "List") {
-
-	}
-
-	// ================================== Search <element.element.element...> 
-	// = Matches groups of elements from the token[x] array.  
-    // =  returns "X <Search Index>" when completed.
-	// =  Completed search indexes are re-used after completion.
-
-    if (my_Command == "Search") {
-	 if (matrixIndex == 0) { 
-		 cout << "- No entries added. \n";
-		 goto getInput;
-	 }
-	 
-	 searchIndex++;
-     mySearch[searchIndex].resize(token.size() + 1);
-    
-	 for (i = 0; i < token.size(); i++) {
-      mySearch[searchIndex][i] = atoi(token[i].c_str());
-	 }
-
-   // Search Matrix (Not yet fully implimented.)
-   //  cudaError_t cudaStatus = searchMatrix(myResults, myMatrix, mySearch);
-   //  if (cudaStatus != cudaSuccess) { cout << "searchMatrix() failed! /n";  }
-
-	 goto getInput;
-	}
-
-    // Load matrix array into CUDA memory.
-	if (my_Command == "Matrix") { 
-
-	}
-
-	cout << "\n> ";
-	goto getInput;
-
 }
