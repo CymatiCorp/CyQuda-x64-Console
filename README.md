@@ -15,6 +15,24 @@ Commands.
 * Exit <br>
    - Exits program.
 
+```
+      [TABLE] not yet implimented.
+
+ADD     [TABLE] [DATA]         - Adds [DATA] to [TABLE] where [DATA] is in 1.1.1 format 
+GET     [TABLE] [INDEX]        - Retrieves "1.2.3" string of data by [INDEX] starting with integer 1 in the order added.
+UPDATE  [TABLE]                - Refreshes [TABLE] arrays in GPU memory, that was inserted by ADD.
+FIND    [TABLE] [DATA]         - Searches for [DATA] 1.1.1 which is converted to CPU array, and sent to GPU memory.
+STOP    [TABLE] [SEARCH_INDEX] - Stops searching for [DATA] in the provided [SEARCH_INDEX] 
+FREE    [TABLE]                - Frees up [TABLE] array from local memory and GPU memory.	
+ACTIVE                         - Outputs all active search indexes in form of 
+			                                   :ACTIVE_TOTAL [TOTAL_ACTIVE_SEARCHES] 
+			                                   :ACTIVE       [SEARCH_INDEX] [SEARCH_ARRAY_STRING] [TOTAL_FOUND_RESULTS]
+			 
+SAVE    [TABLE] [FILE]    - Saves [TABLE] and outputs [TABLE] and [FILE] saved to.
+LOAD    [TABLE] [FILE]    - Loads [TABLE] and outputs [TABLE] and [FILE] loaded from.
+END                       - Terminates connection and program. 
+```
+
 <br><br><br><br>
 Compile Directions.<br><br>
 ===================
